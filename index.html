@@ -1,0 +1,1320 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>SALA PIXELADA - Street Fighter CLON</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            overflow: hidden;
+            background: #b7b5b8;
+            font-family: 'Arial Black', sans-serif;
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: none;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            width: 100vw;
+            height: 100vh;
+        }
+
+        #consola-wrapper {
+            position: relative;
+            width: 572px;
+            height: 1024px;
+            transform-origin: center center;
+        }
+
+        #consola {
+            position: relative;
+            width: 572px;
+            height: 1024px;
+        }
+
+        #consola-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+
+        #pantalla-juego {
+            position: absolute;
+            top: 65px;
+            left: 21px;
+            width: 525px;
+            height: 408px;
+            z-index: 2;
+            overflow: hidden;
+            background: transparent;
+        }
+
+        #juego {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            background-image: url('escenario1.png');
+            background-size: auto 100%;
+            background-position: center bottom;
+            background-repeat: no-repeat;
+            overflow: hidden;
+        }
+
+        #juego::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0) 40%, rgba(0,0,0,0.2) 100%);
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        #hud {
+            position: absolute;
+            top: 5px;
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            padding: 0 10px;
+            z-index: 100;
+        }
+
+        .hud-lado {
+            display: flex;
+            flex-direction: column;
+            width: 35%;
+        }
+
+        .hud-lado.izquierda { align-items: flex-start; }
+        .hud-lado.derecha { align-items: flex-end; }
+
+        .barra-vida-container {
+            width: 100%;
+            height: 20px;
+            background: rgba(0,0,0,0.7);
+            border: 2px solid #fff;
+            border-radius: 3px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .barra-vida {
+            height: 100%;
+            background: linear-gradient(to bottom, #ff0, #f00);
+            transition: width 0.3s ease-out;
+        }
+
+        .hud-lado.izquierda .barra-vida {
+            transform-origin: right center;
+            float: right;
+        }
+
+        .hud-lado.derecha .barra-vida {
+            transform-origin: left center;
+            float: left;
+        }
+
+        .nombre-luchador {
+            color: white;
+            font-size: 10px;
+            font-weight: bold;
+            text-shadow: 1px 1px #000;
+            margin-top: 4px;
+            white-space: nowrap;
+        }
+
+        .marcador-dots {
+            display: flex;
+            gap: 4px;
+            margin-top: 4px;
+        }
+
+        .hud-lado.izquierda .marcador-dots { justify-content: flex-start; }
+        .hud-lado.derecha .marcador-dots { justify-content: flex-end; }
+
+        .victoria-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 2px;
+            background: #333;
+            border: 1px solid #666;
+        }
+
+        .victoria-dot.ganada-jugador {
+            background: #0f0;
+            border-color: #0f0;
+            box-shadow: 0 0 5px #0f0;
+        }
+
+        .victoria-dot.ganada-rival {
+            background: #f00;
+            border-color: #f00;
+            box-shadow: 0 0 5px #f00;
+        }
+
+        #timer-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 25%;
+            margin-top: -5px;
+        }
+
+        #timer {
+            width: 50px;
+            height: 30px;
+            background: rgba(0,0,0,0.8);
+            border: 2px solid #fff;
+            color: #ff0;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 3px;
+        }
+
+        .luchador {
+            position: absolute;
+            bottom: 2%;
+            width: 140px;
+            height: 210px;
+            z-index: 50;
+        }
+
+        #jugador { z-index: 60; }
+
+        .luchador.tanque {
+            width: 168px;
+            height: 252px;
+        }
+
+        .luchador canvas {
+            width: 100%;
+            height: 100%;
+            transition: filter 0.1s ease-out;
+        }
+
+        .efecto-golpe {
+            position: absolute;
+            font-size: 30px;
+            font-weight: bold;
+            color: #ff0;
+            text-shadow: 2px 2px #f00;
+            animation: golpeAnim 0.5s forwards;
+            z-index: 200;
+            pointer-events: none;
+        }
+
+        @keyframes golpeAnim {
+            0% { transform: scale(0) rotate(0deg); opacity: 1; }
+            50% { transform: scale(1.5) rotate(180deg); }
+            100% { transform: scale(2) rotate(360deg); opacity: 0; }
+        }
+
+        .pantalla {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.95);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .pantalla h1 {
+            font-size: 24px;
+            color: #ff0;
+            text-shadow: 2px 2px #f00;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .pantalla h2 {
+            font-size: 16px;
+            color: #fff;
+            margin-bottom: 10px;
+        }
+
+        .selector-personajes {
+            display: flex;
+            gap: 8px;
+            margin: 10px 0;
+            width: 95%;
+            max-width: 500px;
+            justify-content: center;
+        }
+
+        .personaje-opcion {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 115px;
+            padding: 6px 4px;
+            border: 2px solid #555;
+            border-radius: 5px;
+            transition: all 0.2s;
+            background: rgba(255,255,255,0.1);
+        }
+
+        .personaje-opcion.seleccionado {
+            border: 3px solid #ff0;
+            background: rgba(255,255,0,0.25);
+            box-shadow: 0 0 15px rgba(255,255,0,0.6);
+            transform: scale(1.05);
+        }
+
+        .personaje-opcion img { 
+            height: 100px; 
+            width: auto;
+            object-fit: contain; 
+            margin-bottom: 4px;
+        }
+
+        .personaje-opcion h3 { 
+            color: #fff; 
+            font-size: 8px; 
+            margin: 2px 0; 
+            text-align: center;
+            line-height: 1.1;
+        }
+
+        .stats { 
+            color: #aaa; 
+            font-size: 7px; 
+            line-height: 1.2; 
+            text-align: center;
+        }
+
+        .btn-juego {
+            padding: 8px 20px;
+            font-size: 14px;
+            background: #ff0;
+            color: #000;
+            border: 3px solid #555;
+            border-radius: 5px;
+            cursor: pointer;
+            font-family: 'Arial Black', sans-serif;
+            font-weight: bold;
+            margin-top: 10px;
+            transition: all 0.2s;
+        }
+
+        .btn-juego.seleccionado {
+            border-color: #ff0;
+            background: #fff;
+            box-shadow: 0 0 15px rgba(255,255,0,0.8);
+            transform: scale(1.1);
+        }
+
+        .oculto { display: none !important; }
+
+        #anuncio {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 36px;
+            color: #ff0;
+            text-shadow: 3px 3px #f00, -1px -1px #000, 1px -1px #000, -1px 1px #000, 1px 1px #000;
+            z-index: 500;
+            animation: anuncioAnim 2s forwards;
+            pointer-events: none;
+        }
+
+        @keyframes anuncioAnim {
+            0% { transform: translate(-50%, -50%) scale(0); opacity: 0; }
+            20% { transform: translate(-50%, -50%) scale(1.5); opacity: 1; }
+            80% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+            100% { transform: translate(-50%, -50%) scale(2); opacity: 0; }
+        }
+
+        #pantalla-round {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.9);
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 900;
+        }
+        #pantalla-round.visible { display: flex; }
+        #pantalla-round h2 { font-size: 28px; color: #ff0; text-shadow: 2px 2px #f00; margin-bottom: 10px; }
+        #pantalla-round p { font-size: 14px; color: #fff; margin-bottom: 15px; text-align: center; white-space: pre-line; }
+        #pantalla-final h1 { font-size: 32px; }
+        #resultado-final { font-size: 16px; color: #fff; margin: 10px 0; text-align: center; }
+
+        .boton-tactil {
+            position: absolute;
+            z-index: 1000;
+            cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: none;
+            -webkit-touch-callout: none;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        .boton-tactil:active { opacity: 0.3; }
+
+        #btn-up { top: 586px; left: 113px; width: 70px; height: 70px; }
+        #btn-down { top: 733px; left: 117px; width: 70px; height: 70px; }
+        #btn-left { top: 657px; left: 43px; width: 70px; height: 70px; }
+        #btn-right { top: 657px; left: 183px; width: 70px; height: 70px; }
+        #btn-x { top: 585px; left: 392px; width: 75px; height: 75px; }
+        #btn-y { top: 661px; left: 321px; width: 75px; height: 75px; }
+        #btn-a { top: 660px; left: 465px; width: 75px; height: 75px; }
+        #btn-b { top: 734px; left: 395px; width: 75px; height: 75px; }
+        #btn-select { top: 875px; left: 209px; width: 85px; height: 45px; }
+        #btn-start { top: 874px; left: 298px; width: 85px; height: 45px; }
+        #btn-diag-up-left { top: 608px; left: 63px; width: 50px; height: 50px; }
+        #btn-diag-up-right { top: 606px; left: 190px; width: 50px; height: 50px; }
+        #btn-diag-down-left { top: 735px; left: 64px; width: 50px; height: 50px; }
+        #btn-diag-down-right { top: 736px; left: 190px; width: 50px; height: 50px; }
+        .boton-tactil.activo { opacity: 0.3; }
+
+        #modo-indicador {
+            position: absolute;
+            top: 5px; left: 50%;
+            transform: translateX(-50%);
+            color: #0f0; font-size: 9px;
+            background: rgba(0,0,0,0.7);
+            padding: 2px 8px; border-radius: 3px;
+            z-index: 100; white-space: nowrap;
+        }
+
+        #pantalla-vs {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            display: none; flex-direction: column;
+            justify-content: center; align-items: center; z-index: 800;
+        }
+        .vs-contenedor { display: flex; align-items: center; gap: 10px; }
+        .vs-marco {
+            width: 140px; height: 140px;
+            border: 3px solid #ff0; border-radius: 6px;
+            overflow: hidden; box-shadow: 0 0 15px rgba(255, 255, 0, 0.5); background: #000;
+        }
+        .vs-marco img { width: 100%; height: 100%; object-fit: cover; }
+        .vs-texto { font-size: 48px; font-weight: bold; color: #f00; text-shadow: 3px 3px #000, -1px -1px #ff0; font-style: italic; }
+        .vs-nombres { display: flex; justify-content: space-between; width: 100%; max-width: 320px; margin-top: 10px; }
+        .vs-nombre { color: #fff; font-size: 11px; font-weight: bold; text-shadow: 1px 1px #000; text-align: center; flex: 1; }
+        
+        #texto-round, #texto-fight {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            font-weight: bold; text-shadow: 4px 4px #000; z-index: 700;
+            opacity: 0; transition: opacity 0.5s ease-in-out; pointer-events: none;
+        }
+        #texto-round.visible, #texto-fight.visible { opacity: 1; }
+        #texto-round { color: #fff; font-size: 42px; }
+        #texto-fight { color: #f00; font-size: 56px; font-style: italic; text-shadow: 4px 4px #000, 0 0 20px #f00; }
+    </style>
+</head>
+<body>
+
+    <div id="consola-wrapper">
+        <div id="consola">
+            <img id="consola-bg" src="chony-gameboy.png" alt="CHONY GAMEBOY">
+
+            <div id="pantalla-juego">
+                <div id="juego">
+                    <div id="modo-indicador">MENÚ: Elige personaje</div>
+
+                    <div id="hud" class="oculto">
+                        <div class="hud-lado izquierda">
+                            <div class="barra-vida-container">
+                                <div class="barra-vida" id="vida-jugador" style="width: 100%;"></div>
+                            </div>
+                            <div class="nombre-luchador" id="nombre-jugador">JUGADOR</div>
+                            <div class="marcador-dots" id="marcador-jugador">
+                                <div class="victoria-dot" id="v-j1"></div>
+                                <div class="victoria-dot" id="v-j2"></div>
+                                <div class="victoria-dot" id="v-j3"></div>
+                            </div>
+                        </div>
+
+                        <div id="timer-container">
+                            <div id="timer">60</div>
+                        </div>
+
+                        <div class="hud-lado derecha">
+                            <div class="barra-vida-container">
+                                <div class="barra-vida" id="vida-rival" style="width: 100%;"></div>
+                            </div>
+                            <div class="nombre-luchador" id="nombre-rival">RIVAL</div>
+                            <div class="marcador-dots" id="marcador-rival">
+                                <div class="victoria-dot" id="v-r1"></div>
+                                <div class="victoria-dot" id="v-r2"></div>
+                                <div class="victoria-dot" id="v-r3"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="jugador" class="luchador oculto"><canvas></canvas></div>
+                    
+                    <div id="pantalla-vs">
+                        <div class="vs-contenedor">
+                            <div class="vs-marco"><img id="vs-avatar-jugador" src="cara1.png" alt="Jugador"></div>
+                            <div class="vs-texto">VS</div>
+                            <div class="vs-marco"><img id="vs-avatar-rival" src="cara1.png" alt="Rival"></div>
+                        </div>
+                        <div class="vs-nombres">
+                            <div class="vs-nombre" id="vs-nombre-jugador">JUGADOR</div>
+                            <div class="vs-nombre" id="vs-nombre-rival">RIVAL</div>
+                        </div>
+                    </div>
+
+                    <div id="texto-round"></div>
+                    <div id="texto-fight">FIGHT!</div>
+
+                    <div id="rival" class="luchador oculto"><canvas></canvas></div>
+
+                    <div id="pantalla-round">
+                        <h2 id="round-titulo">¡ROUND 2!</h2>
+                        <p id="round-mensaje">Prepárate</p>
+                        <button class="btn-juego seleccionado" id="btn-continuar">CONTINUAR</button>
+                    </div>
+
+                    <div id="pantalla-inicio" class="pantalla">
+                        <h1>SALA PIXELADA<br>STREET FIGHTER CLON</h1>
+                        <h2>ELIGE TU LUCHADOR</h2>
+                        <div class="selector-personajes">
+                            <div class="personaje-opcion seleccionado" data-personaje="1">
+                                <img src="avatar1.png" alt="El Jefe Fatality">
+                                <h3>El Jefe Fatality</h3>
+                                <div class="stats">Vida: ★★★<br>Vel: ★★<br>Daño: ★★★</div>
+                            </div>
+                            <div class="personaje-opcion" data-personaje="2">
+                                <img src="avatar2.png" alt="La Jefa Glitch">
+                                <h3>La Jefa Glitch</h3>
+                                <div class="stats">Vida: ★★<br>Vel: ★★★<br>Daño: ★★</div>
+                            </div>
+                            <div class="personaje-opcion" data-personaje="3">
+                                <img src="avatar3.png" alt="Pixelmaster Kombat">
+                                <h3>Pixelmaster Kombat</h3>
+                                <div class="stats">Vida: ★★★<br>Vel: ★★<br>Daño: ★★</div>
+                            </div>
+                            <div class="personaje-opcion" data-personaje="4">
+                                <img src="avatar4.png" alt="Retroserwer Respawn">
+                                <h3>Retroserwer Respawn</h3>
+                                <div class="stats">Vida: ★★<br>Vel: ★★<br>Daño: ★★★</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="pantalla-final" class="pantalla oculto">
+                        <h1 id="resultado-final-titulo">¡GANASTE!</h1>
+                        <div id="resultado-final"></div>
+                        <button class="btn-juego seleccionado" id="btn-reiniciar">JUGAR OTRA VEZ</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="btn-up" class="boton-tactil" data-tecla="arrowup"></div>
+            <div id="btn-down" class="boton-tactil" data-tecla="arrowdown"></div>
+            <div id="btn-left" class="boton-tactil" data-tecla="arrowleft"></div>
+            <div id="btn-right" class="boton-tactil" data-tecla="arrowright"></div>
+            <div id="btn-diag-up-left" class="boton-tactil" data-tecla="diagonalupleft"></div>
+            <div id="btn-diag-up-right" class="boton-tactil" data-tecla="diagonalupright"></div>
+            <div id="btn-diag-down-left" class="boton-tactil" data-tecla="diagonaldownleft"></div>
+            <div id="btn-diag-down-right" class="boton-tactil" data-tecla="diagonaldownright"></div>
+            <div id="btn-x" class="boton-tactil" data-tecla="c"></div>
+            <div id="btn-y" class="boton-tactil" data-tecla="v"></div>
+            <div id="btn-a" class="boton-tactil" data-tecla="z"></div>
+            <div id="btn-b" class="boton-tactil" data-tecla="x"></div>
+            <div id="btn-select" class="boton-tactil" data-tecla="select"></div>
+            <div id="btn-start" class="boton-tactil" data-tecla="start"></div>
+        </div>
+    </div>
+
+    <script>
+        function vibrarBoton() { try { if (navigator.vibrate) navigator.vibrate(30); } catch(e) {} }
+        function escalarConsola() {
+            const wrapper = document.getElementById('consola-wrapper');
+            const scaleX = window.innerWidth / 572;
+            const scaleY = window.innerHeight / 1024;
+            wrapper.style.transform = `scale(${Math.min(scaleX, scaleY, 1)})`;
+        }
+        window.addEventListener('resize', escalarConsola);
+        window.addEventListener('load', escalarConsola);
+        escalarConsola();
+
+        let sonidoActivado = true;
+        const sonidos = {
+            puñetazo: new Audio('puñetazo.mp3'), patada: new Audio('patada.mp3'), especial: new Audio('especial.mp3'),
+            hadouken: new Audio('hadouken.mp3'), hadouken2: new Audio('hadouken2.mp3'), bloqueo: new Audio('bloqueo.mp3'),
+            ko: new Audio('ko.mp3'), inicioround: new Audio('inicioround.mp3'), victoria: new Audio('victoria.mp3'),
+            derrota: new Audio('derrota.mp3'), menu: new Audio('menu.mp3'), seleccion: new Audio('seleccion.mp3')
+        };
+        Object.values(sonidos).forEach(s => s.volume = 0.7);
+        function reproducirSonido(nombre) {
+            if (!sonidoActivado) return;
+            const sonido = sonidos[nombre];
+            if (sonido) {
+                const clone = sonido.cloneNode(true); clone.volume = 0.7;
+                clone.play().catch(e => console.log('Error reproduciendo ' + nombre + ':', e));
+            }
+        }
+
+        const PARALLAX_FACTOR = 0.4;
+        const POSICION_INICIAL_X = 30;
+        function actualizarFondo() {
+            const juego = document.getElementById('juego');
+            const desplazamiento = (posXJugador - POSICION_INICIAL_X) * PARALLAX_FACTOR;
+            juego.style.backgroundPositionX = `calc(50% - ${desplazamiento}px)`;
+        }
+
+        let estadoJuego = 'menu';
+        let indicePersonaje = 0;
+        let menuCooldown = false;
+
+        function actualizarSeleccionMenu() {
+            document.querySelectorAll('.personaje-opcion').forEach(el => el.classList.remove('seleccionado'));
+            const opciones = document.querySelectorAll('.personaje-opcion');
+            if (opciones[indicePersonaje]) opciones[indicePersonaje].classList.add('seleccionado');
+            const nombres = ['El Jefe Fatality', 'La Jefa Glitch', 'Pixelmaster Kombat', 'Retroserwer Respawn'];
+            const indicador = document.getElementById('modo-indicador');
+            indicador.innerText = 'MENÚ: ' + nombres[indicePersonaje];
+            indicador.classList.remove('oculto');
+        }
+
+        function confirmarSeleccionPersonaje() {
+            reproducirSonido('seleccion');
+            seleccionarPersonaje(indicePersonaje + 1);
+        }
+
+        function seleccionarPersonaje(num) {
+            vibrarBoton();
+            jugadorNum = num;
+            rivalesDisponibles = [1, 2, 3, 4].filter(n => n !== num);
+            rivalesDisponibles.sort(() => Math.random() - 0.5);
+            indiceRivalActual = 0;
+            jugadorConfig = PERSONAJES[jugadorNum];
+            rivalNum = rivalesDisponibles[0];
+            rivalConfig = PERSONAJES[rivalNum];
+            roundActual = 1;
+            victoriasJugador = 0;
+            victoriasRival = 0;
+            mostrarPantallaVS();
+        }
+
+        function iniciarSiguienteCombate() {
+            indiceRivalActual++;
+            rivalNum = rivalesDisponibles[indiceRivalActual];
+            rivalConfig = PERSONAJES[rivalNum];
+            roundActual = 1;
+            victoriasJugador = 0;
+            victoriasRival = 0;
+            mostrarPantallaVS();
+        }
+
+        function mostrarPantallaVS() {
+            document.getElementById('pantalla-inicio').classList.add('oculto');
+            document.getElementById('pantalla-round').classList.remove('visible');
+            document.getElementById('pantalla-final').classList.add('oculto');
+
+            const pantallaVS = document.getElementById('pantalla-vs');
+            
+            const avatarJugador = document.getElementById('vs-avatar-jugador');
+            const avatarRival = document.getElementById('vs-avatar-rival');
+            
+            avatarJugador.src = jugadorConfig.avatarCara;
+            avatarJugador.style.transform = 'scaleX(1)';
+            
+            avatarRival.src = rivalConfig.avatarCara;
+            avatarRival.style.transform = 'scaleX(-1)';
+            
+            document.getElementById('vs-nombre-jugador').textContent = jugadorConfig.nombre;
+            document.getElementById('vs-nombre-rival').textContent = rivalConfig.nombre;
+            
+            pantallaVS.style.display = 'flex';
+            setTimeout(() => {
+                pantallaVS.style.display = 'none';
+                iniciarRound();
+            }, 2500);
+        }
+
+        const teclas = {};
+        const teclasPulsadas = {};
+        const MAX_TIEMPO_ENTRE_INPUTS = 500;
+        let bufferInputs = [];
+        let bolasEnergia = [];
+        let ultimaTeclaDireccion = null;
+        let tiempoUltimaDireccion = 0;
+        let hadoukenImg = null;
+        const RETROCESO = { puñetazo: 10, patada: 18, especial: 30, hadouken: 25 };
+        let timerIntervalActual = null;
+        let roundTerminado = false;
+
+        function registrarInputParaEspecial(tecla) {
+            const ahora = Date.now();
+            if (tecla === 'arrowleft' || tecla === 'arrowright') {
+                ultimaTeclaDireccion = tecla;
+                tiempoUltimaDireccion = ahora;
+            }
+            if (tecla === 'z' && ultimaTeclaDireccion && (ahora - tiempoUltimaDireccion < MAX_TIEMPO_ENTRE_INPUTS)) {
+                if (bolasEnergia.length === 0 && estadoJuego === 'combate') {
+                    const rivalADerecha = posXRival > posXJugador;
+                    const direccionCorrecta = (rivalADerecha && ultimaTeclaDireccion === 'arrowleft') || (!rivalADerecha && ultimaTeclaDireccion === 'arrowright');
+                    if (direccionCorrecta) {
+                        lanzarBolaEnergia();
+                        ultimaTeclaDireccion = null;
+                        tiempoUltimaDireccion = 0;
+                    }
+                }
+            }
+        }
+
+        // CAMBIO: El jugador usa hadouken si es La Jefa (2), hadouken2 si es otro
+        function lanzarBolaEnergia() {
+            estadoJugador = 'puñetazo';
+            const sonidoHadouken = (jugadorNum === 2) ? 'hadouken' : 'hadouken2';
+            reproducirSonido(sonidoHadouken);
+            const direccion = (posXRival > posXJugador) ? 1 : -1;
+            bolasEnergia.push({ x: posXJugador + (direccion === 1 ? 140 : -40), y: 100, velocidad: 5 * direccion, radio: 40, direccion: direccion, impacto: false, esRival: false, tipo: 'hadouken', activa: true });
+            setTimeout(() => { if (vidaJugador > 0 && estadoJugador !== 'saltando' && estadoJugador !== 'defensa') estadoJugador = 'idle'; }, 300);
+        }
+
+        // CAMBIO: El rival usa hadouken si es La Jefa (2), hadouken2 si es otro
+        function lanzarHadoukenRival() {
+            const bolasRivalActivas = bolasEnergia.filter(b => b.esRival && b.activa).length;
+            if (bolasRivalActivas > 0) return;
+            const probabilidad = HADOUKEN_RIVAL[rivalNum] || 0.001;
+            if (Math.random() > probabilidad) return;
+            if (Math.abs(posXRival - posXJugador) < 100) return;
+            const direccion = (posXJugador > posXRival) ? 1 : -1;
+            bolasEnergia.push({ x: posXRival + (direccion === 1 ? 140 : -40), y: 100, velocidad: 5 * direccion, radio: 40, direccion: direccion, impacto: false, esRival: true, tipo: 'hadouken', activa: true });
+            const sonidoHadouken = (rivalNum === 2) ? 'hadouken' : 'hadouken2';
+            reproducirSonido(sonidoHadouken);
+        }
+
+        function aplicarRetrocesoRival(tipo) {
+            const retroceso = RETROCESO[tipo] || 10;
+            const direccion = posXRival > posXJugador ? 1 : -1;
+            posXRival += direccion * retroceso;
+            if (posXRival < 0) posXRival = 0;
+            if (posXRival > 385) posXRival = 385;
+            document.getElementById('rival').style.left = posXRival + 'px';
+        }
+
+        function aplicarRetrocesoJugador(tipo) {
+            const retroceso = RETROCESO[tipo] || 10;
+            const direccion = posXJugador > posXRival ? 1 : -1;
+            posXJugador += direccion * retroceso;
+            if (posXJugador < 0) posXJugador = 0;
+            if (posXJugador > 385) posXJugador = 385;
+            document.getElementById('jugador').style.left = posXJugador + 'px';
+        }
+
+        function actualizarBolasEnergia() {
+            for (let i = bolasEnergia.length - 1; i >= 0; i--) {
+                const bola = bolasEnergia[i];
+                if (!bola.activa) { bolasEnergia.splice(i, 1); continue; }
+                if (!bola.impacto) bola.x += bola.velocidad;
+                
+                if (!bola.esRival) {
+                    const distanciaX = Math.abs(bola.x - (posXRival + 70));
+                    const distanciaY = Math.abs(bola.y - 100);
+                    if (!bola.impacto && distanciaX < (bola.radio + 70) && distanciaY < (bola.radio + 100)) {
+                        let dañoFinal = 15;
+                        if (estadoRival === 'defensa') {
+                            dañoFinal = dañoFinal * 0.2;
+                            mostrarEfectoGolpe(posXRival, 'BLOQ');
+                            reproducirSonido('bloqueo');
+                        } else {
+                            estadoRival = 'golpeado';
+                            mostrarEfectoGolpe(posXRival, 'especial');
+                            const rivalEl = document.getElementById('rival');
+                            rivalEl.style.filter = 'brightness(3) drop-shadow(0 0 20px #0ff)';
+                            setTimeout(() => { rivalEl.style.filter = ''; }, 400);
+                            aplicarRetrocesoRival('hadouken');
+                        }
+                        vidaRival -= dañoFinal;
+                        actualizarBarrasVida();
+                        setTimeout(() => { if (vidaRival > 0 && estadoRival !== 'defensa') estadoRival = 'idle'; }, 300);
+                        if (vidaRival <= 0 && !roundTerminado) {
+                            roundTerminado = true;
+                            estadoRival = 'derrotado';
+                            dibujarDerrotado('rival');
+                            reproducirSonido('ko');
+                            setTimeout(() => { ganarRound(); }, 2000);
+                        }
+                        bola.impacto = true;
+                        bola.velocidad = 0;
+                        setTimeout(() => { bola.activa = false; }, 400);
+                        continue;
+                    }
+                }
+                
+                if (bola.esRival) {
+                    const distanciaX = Math.abs(bola.x - (posXJugador + 70));
+                    const distanciaY = Math.abs(bola.y - 100);
+                    if (!bola.impacto && distanciaX < (bola.radio + 70) && distanciaY < (bola.radio + 100)) {
+                        if (estaSaltando) { /* Esquiva */ } else {
+                            let dañoFinal = 15;
+                            if (estaDefendiendo) {
+                                dañoFinal = dañoFinal * 0.2;
+                                mostrarEfectoGolpe(posXJugador, 'BLOQ');
+                                reproducirSonido('bloqueo');
+                            } else {
+                                estadoJugador = 'golpeado';
+                                mostrarEfectoGolpe(posXJugador, 'especial');
+                                const jugadorEl = document.getElementById('jugador');
+                                jugadorEl.style.filter = 'brightness(3) drop-shadow(0 0 20px #f00)';
+                                setTimeout(() => { jugadorEl.style.filter = ''; }, 400);
+                                aplicarRetrocesoJugador('hadouken');
+                            }
+                            vidaJugador -= dañoFinal;
+                            actualizarBarrasVida();
+                            setTimeout(() => { if (vidaJugador > 0 && !estaDefendiendo) estadoJugador = 'idle'; }, 300);
+                            if (vidaJugador <= 0 && !roundTerminado) {
+                                roundTerminado = true;
+                                estadoJugador = 'derrotado';
+                                dibujarDerrotado('jugador');
+                                reproducirSonido('ko');
+                                setTimeout(() => { perderRound(); }, 2000);
+                            }
+                            bola.impacto = true;
+                            bola.velocidad = 0;
+                            setTimeout(() => { bola.activa = false; }, 400);
+                            continue;
+                        }
+                    }
+                }
+                
+                if (bola.x > 525 || bola.x < -40) { bola.activa = false; bolasEnergia.splice(i, 1); }
+            }
+        }
+
+        function dibujarBolasEnergia() {
+            const juego = document.getElementById('juego');
+            document.querySelectorAll('.bola-energia').forEach(el => el.remove());
+            bolasEnergia.forEach(bola => {
+                if (!bola.activa) return;
+                const contenedor = document.createElement('div');
+                contenedor.className = 'bola-energia';
+                contenedor.style.position = 'absolute';
+                contenedor.style.left = bola.x + 'px';
+                contenedor.style.bottom = bola.y + 'px';
+                contenedor.style.width = (bola.radio * 2) + 'px';
+                contenedor.style.height = (bola.radio * 2) + 'px';
+                contenedor.style.zIndex = '150';
+                contenedor.style.pointerEvents = 'none';
+                if (bola.direccion === -1) contenedor.style.transform = 'scaleX(-1)';
+                
+                for (let i = 3; i >= 1; i--) {
+                    const estela = document.createElement('div');
+                    estela.style.position = 'absolute';
+                    estela.style.left = (-i * 20) + 'px';
+                    estela.style.top = '50%';
+                    estela.style.transform = 'translateY(-50%)';
+                    estela.style.width = (bola.radio * 2 - i * 8) + 'px';
+                    estela.style.height = (bola.radio * 2 - i * 8) + 'px';
+                    estela.style.borderRadius = '50%';
+                    estela.style.background = `radial-gradient(circle, rgba(0,255,255,${0.6 - i * 0.15}) 0%, transparent 70%)`;
+                    contenedor.appendChild(estela);
+                }
+                
+                if (hadoukenImg && hadoukenImg.complete && hadoukenImg.naturalWidth > 0) {
+                    const img = document.createElement('img');
+                    img.src = 'hadouken.png';
+                    img.style.position = 'absolute';
+                    img.style.width = '100%';
+                    img.style.height = '100%';
+                    img.style.pointerEvents = 'none';
+                    img.style.filter = 'drop-shadow(0 0 12px #0ff) drop-shadow(0 0 24px #00f) drop-shadow(0 0 36px #00f)';
+                    contenedor.appendChild(img);
+                } else {
+                    const bolaPrincipal = document.createElement('div');
+                    bolaPrincipal.style.position = 'absolute';
+                    bolaPrincipal.style.width = '100%';
+                    bolaPrincipal.style.height = '100%';
+                    bolaPrincipal.style.borderRadius = '50%';
+                    bolaPrincipal.style.background = 'radial-gradient(circle, #fff 0%, #0ff 30%, #00f 70%, transparent 100%)';
+                    bolaPrincipal.style.boxShadow = '0 0 20px #0ff, 0 0 40px #00f, 0 0 60px #00f, inset 0 0 20px #fff';
+                    bolaPrincipal.style.border = '3px solid #0ff';
+                    contenedor.appendChild(bolaPrincipal);
+                }
+                juego.appendChild(contenedor);
+            });
+        }
+
+        function activarTecla(tecla) { 
+            teclas[tecla] = true; 
+            vibrarBoton();
+            registrarInputParaEspecial(tecla);
+            if (estadoJuego === 'menu') manejarMenu(tecla);
+            else if (estadoJuego === 'round') manejarRound(tecla);
+            else if (estadoJuego === 'final') manejarFinal(tecla);
+        }
+        function desactivarTecla(tecla) { teclas[tecla] = false; }
+
+        function manejarMenu(tecla) {
+            if (menuCooldown) return;
+            if (tecla === 'arrowleft') { 
+                indicePersonaje = (indicePersonaje - 1 + 4) % 4;
+                reproducirSonido('menu'); 
+                actualizarSeleccionMenu(); 
+                menuCooldown = true; 
+                setTimeout(() => menuCooldown = false, 200); 
+            }
+            else if (tecla === 'arrowright') { 
+                indicePersonaje = (indicePersonaje + 1) % 4;
+                reproducirSonido('menu'); 
+                actualizarSeleccionMenu(); 
+                menuCooldown = true; 
+                setTimeout(() => menuCooldown = false, 200); 
+            }
+            else if (tecla === 'z' || tecla === 'start') { 
+                confirmarSeleccionPersonaje(); 
+            }
+        }
+        function manejarRound(tecla) { if (tecla === 'z' || tecla === 'start') siguienteRound(); }
+        function manejarFinal(tecla) { if (tecla === 'z' || tecla === 'start') location.reload(); }
+
+        document.querySelectorAll('.boton-tactil').forEach(btn => {
+            const tecla = btn.dataset.tecla;
+            btn.addEventListener('touchstart', (e) => { e.preventDefault(); if (!teclas[tecla]) { teclasPulsadas[tecla] = true; } activarTecla(tecla); btn.classList.add('activo'); }, { passive: false });
+            btn.addEventListener('touchend', (e) => { e.preventDefault(); desactivarTecla(tecla); btn.classList.remove('activo'); }, { passive: false });
+            btn.addEventListener('touchcancel', (e) => { e.preventDefault(); desactivarTecla(tecla); btn.classList.remove('activo'); }, { passive: false });
+            btn.addEventListener('mousedown', (e) => { e.preventDefault(); if (!teclas[tecla]) { teclasPulsadas[tecla] = true; } activarTecla(tecla); btn.classList.add('activo'); });
+            btn.addEventListener('mouseup', (e) => { e.preventDefault(); desactivarTecla(tecla); btn.classList.remove('activo'); });
+            btn.addEventListener('mouseleave', () => { desactivarTecla(tecla); btn.classList.remove('activo'); });
+        });
+
+        document.addEventListener('keydown', (e) => { const tecla = e.key.toLowerCase(); if (!teclas[tecla]) { teclasPulsadas[tecla] = true; } teclas[tecla] = true; e.preventDefault(); activarTecla(tecla); });
+        document.addEventListener('keyup', (e) => teclas[e.key.toLowerCase()] = false);
+
+        const PERSONAJES = {
+            1: { nombre: 'El Jefe Fatality', avatar: 'avatar1.png', avatarCara: 'cara1.png', spriteSheet: 'spritesheet.png', vida: 140, velocidad: 4, daño: 9 },
+            2: { nombre: 'La Jefa Glitch', avatar: 'avatar2.png', avatarCara: 'cara2.png', spriteSheet: 'spritesheet2.png', vida: 100, velocidad: 6, daño: 9 },
+            3: { nombre: 'Pixelmaster Kombat', avatar: 'avatar3.png', avatarCara: 'cara3.png', spriteSheet: 'spritesheet3.png', vida: 150, velocidad: 3, daño: 11 },
+            4: { nombre: 'Retroserwer Respawn', avatar: 'avatar4.png', avatarCara: 'cara4.png', spriteSheet: 'spritesheet4.png', vida: 140, velocidad: 4, daño: 9 }
+        };
+
+        const DIFICULTAD = {
+            1: { vidaExtra: 1.5, velocidadIA: 0.65, bloqueo: 0.050, ataque: 0.018, salto: 0.012, repliegue: 0.10 },
+            2: { vidaExtra: 1.4, velocidadIA: 0.70, bloqueo: 0.040, ataque: 0.015, salto: 0.010, repliegue: 0.12 },
+            3: { vidaExtra: 1.6, velocidadIA: 0.60, bloqueo: 0.060, ataque: 0.022, salto: 0.015, repliegue: 0.08 },
+            4: { vidaExtra: 1.55, velocidadIA: 0.75, bloqueo: 0.055, ataque: 0.020, salto: 0.013, repliegue: 0.15 }
+        };
+
+        const HADOUKEN_RIVAL = { 1: 0.003, 2: 0.002, 3: 0.005, 4: 0.004 };
+        let FRAME_WIDTH = 0, FRAME_HEIGHT = 0;
+        const COLS = 5, ROWS = 2;
+        const ANIMACIONES = { idle: [0, 0], caminar1: [0, 1], caminar2: [0, 2], saltando: [0, 3], puñetazo: [0, 4], patada: [1, 0], especial: [1, 1], golpeado: [1, 2], derrotado: [1, 3], defensa: [1, 4] };
+
+        let spriteSheets = {}, jugadorConfig, rivalConfig, jugadorNum, rivalNum;
+        let vidaJugador, vidaRival, vidaRivalMax, posXJugador, posXRival, tiempo = 60;
+        let juegoActivo = false, cooldownAtaque = false;
+        let estadoJugador = 'idle', estadoRival = 'idle';
+        let animTimer = 0, animTimerRival = 0;
+        let estaSaltando = false, estaDefendiendo = false;
+        let rivalSaltando = false;
+        let rivalEnRepliegue = false;
+        let framesRepliegue = 0;
+        let framesDesdeUltimoRepliegue = 0;
+        
+        let roundActual = 1;
+        const ROUNDS_POR_COMBATE = 3;
+        let victoriasJugador = 0, victoriasRival = 0;
+        let rivalesDisponibles = [], indiceRivalActual = 0;
+        let timeoutGanarRound = null;
+
+        function ajustarTamanoLuchador(quien, numPersonaje) {
+            const el = document.getElementById(quien);
+            el.classList.remove('tanque');
+        }
+
+        function cargarSpriteSheets() {
+            hadoukenImg = new Image();
+            hadoukenImg.src = 'hadouken.png';
+            hadoukenImg.onload = () => { console.log('✅ hadouken.png cargado'); };
+            hadoukenImg.onerror = () => { console.error('⚠️ No se pudo cargar hadouken.png'); hadoukenImg = null; };
+            return Promise.all([
+                new Promise((resolve, reject) => { const img = new Image(); img.src = 'spritesheet.png'; img.onload = () => { spriteSheets[1] = img; FRAME_WIDTH = img.width / COLS; FRAME_HEIGHT = img.height / ROWS; resolve(); }; img.onerror = () => { console.error('❌ No se pudo cargar spritesheet.png'); reject(); }; }),
+                new Promise((resolve, reject) => { const img = new Image(); img.src = 'spritesheet2.png'; img.onload = () => { spriteSheets[2] = img; resolve(); }; img.onerror = () => { console.error('❌ No se pudo cargar spritesheet2.png'); reject(); }; }),
+                new Promise((resolve, reject) => { const img = new Image(); img.src = 'spritesheet3.png'; img.onload = () => { spriteSheets[3] = img; resolve(); }; img.onerror = () => { console.error('❌ No se pudo cargar spritesheet3.png'); reject(); }; }),
+                new Promise((resolve, reject) => { const img = new Image(); img.src = 'spritesheet4.png'; img.onload = () => { spriteSheets[4] = img; resolve(); }; img.onerror = () => { console.error('❌ No se pudo cargar spritesheet4.png'); reject(); }; })
+            ]);
+        }
+
+        function dibujarFrame(canvas, spriteSheet, fila, columna, voltear) {
+            if (!spriteSheet) return;
+            const ctx = canvas.getContext('2d');
+            canvas.width = FRAME_WIDTH; canvas.height = FRAME_HEIGHT;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.save();
+            if (voltear) { ctx.translate(canvas.width, 0); ctx.scale(-1, 1); }
+            ctx.drawImage(spriteSheet, columna * FRAME_WIDTH, fila * FRAME_HEIGHT, FRAME_WIDTH, FRAME_HEIGHT, 0, 0, canvas.width, canvas.height);
+            ctx.restore();
+        }
+
+        function dibujarDerrotado(quien) {
+            const canvas = document.querySelector('#' + quien + ' canvas');
+            const num = quien === 'jugador' ? jugadorNum : rivalNum;
+            const frame = ANIMACIONES['derrotado'];
+            const voltear = quien === 'jugador' ? (posXRival <= posXJugador) : (posXJugador <= posXRival);
+            dibujarFrame(canvas, spriteSheets[num], frame[0], frame[1], voltear);
+        }
+
+        function detenerTimer() { if (timerIntervalActual !== null) { clearInterval(timerIntervalActual); timerIntervalActual = null; } }
+
+        function iniciarRound() {
+            if (timeoutGanarRound) { clearTimeout(timeoutGanarRound); timeoutGanarRound = null; }
+            detenerTimer();
+            roundTerminado = false;
+            estadoJugador = 'idle';
+            estadoRival = 'idle';
+            estaSaltando = false;
+            estaDefendiendo = false;
+            rivalSaltando = false;
+            cooldownAtaque = false;
+            animTimer = 0;
+            animTimerRival = 0;
+            rivalEnRepliegue = false;
+            framesRepliegue = 0;
+            framesDesdeUltimoRepliegue = 0;
+            juegoActivo = false;
+            bolasEnergia = [];
+            bufferInputs = [];
+            ultimaTeclaDireccion = null;
+            tiempoUltimaDireccion = 0;
+            for (let tecla in teclas) { delete teclas[tecla]; }
+            for (let tecla in teclasPulsadas) { delete teclasPulsadas[tecla]; }
+            document.getElementById('jugador').style.filter = '';
+            document.getElementById('rival').style.filter = '';
+            
+            document.getElementById('juego').style.backgroundImage = "url('escenario" + rivalNum + ".png')";
+            
+            estadoJuego = 'combate';
+            document.getElementById('modo-indicador').classList.add('oculto');
+            document.getElementById('pantalla-inicio').classList.add('oculto');
+            document.getElementById('pantalla-final').classList.add('oculto');
+            document.getElementById('pantalla-round').classList.remove('visible');
+            document.getElementById('hud').classList.remove('oculto');
+            document.getElementById('nombre-jugador').innerText = jugadorConfig.nombre;
+            document.getElementById('nombre-rival').innerText = rivalConfig.nombre;
+            actualizarMarcador();
+            const jugadorEl = document.getElementById('jugador');
+            const rivalEl = document.getElementById('rival');
+            jugadorEl.classList.remove('oculto'); 
+            rivalEl.classList.remove('oculto');
+            ajustarTamanoLuchador('jugador', jugadorNum);
+            ajustarTamanoLuchador('rival', rivalNum);
+            posXJugador = 30; 
+            posXRival = 355;
+            jugadorEl.style.left = posXJugador + 'px'; 
+            rivalEl.style.left = posXRival + 'px';
+            jugadorEl.style.bottom = '2%';
+            rivalEl.style.bottom = '2%';
+            vidaJugador = jugadorConfig.vida; 
+            vidaRivalMax = Math.round(rivalConfig.vida * DIFICULTAD[rivalNum].vidaExtra);
+            vidaRival = vidaRivalMax;
+            actualizarBarrasVida();
+            actualizarFondo();
+            mostrarAnuncio('¡ROUND ' + roundActual + '!');
+            reproducirSonido('inicioround');
+            juegoActivo = true; 
+            tiempo = 60;
+            document.getElementById('timer').innerText = tiempo;
+            timerIntervalActual = setInterval(() => {
+                if (!juegoActivo || roundTerminado) { detenerTimer(); return; }
+                tiempo--;
+                document.getElementById('timer').innerText = tiempo;
+                if (tiempo <= 0) {
+                    detenerTimer();
+                    if (!roundTerminado) {
+                        roundTerminado = true;
+                        if (vidaJugador > vidaRival) ganarRound();
+                        else if (vidaRival > vidaJugador) perderRound();
+                        else ganarRound();
+                    }
+                }
+            }, 1000);
+            bucleJuego();
+        }
+
+        function bucleJuego() {
+            if (!juegoActivo) return;
+            const jugadorCanvas = document.querySelector('#jugador canvas');
+            const rivalCanvas = document.querySelector('#rival canvas');
+            const pulsadoArriba = teclasPulsadas['arrowup'] || teclasPulsadas['diagonalupleft'] || teclasPulsadas['diagonalupright'];
+            const pulsadoAbajo = teclasPulsadas['arrowdown'] || teclasPulsadas['diagonaldownleft'] || teclasPulsadas['diagonaldownright'];
+            const pulsadoIzquierda = teclas['arrowleft'] || teclas['diagonalupleft'] || teclas['diagonaldownleft'];
+            const pulsadoDerecha = teclas['arrowright'] || teclas['diagonalupright'] || teclas['diagonaldownright'];
+            let moviendose = false;
+            if (teclas['v'] && estadoJugador === 'idle') { estaDefendiendo = true; estadoJugador = 'defensa'; }
+            else if (!teclas['v'] && estadoJugador === 'defensa') { estaDefendiendo = false; estadoJugador = 'idle'; }
+            if (!estaDefendiendo && !estaSaltando && estadoJugador !== 'derrotado') {
+                if (pulsadoIzquierda && posXJugador > 0) { posXJugador -= jugadorConfig.velocidad; moviendose = true; }
+                if (pulsadoDerecha && posXJugador < 385) { posXJugador += jugadorConfig.velocidad; moviendose = true; }
+                if (pulsadoArriba && !estaSaltando && estadoJugador === 'idle') {
+                    estaSaltando = true;
+                    estadoJugador = 'saltando';
+                    const jugadorEl = document.getElementById('jugador');
+                    jugadorEl.style.bottom = 'calc(2% + 50px)';
+                    let direccionSalto = 0;
+                    if (pulsadoIzquierda) direccionSalto = -1;
+                    else if (pulsadoDerecha) direccionSalto = 1;
+                    if (direccionSalto !== 0) {
+                        const intervaloSalto = setInterval(() => {
+                            if (!estaSaltando) { clearInterval(intervaloSalto); return; }
+                            posXJugador += direccionSalto * jugadorConfig.velocidad;
+                            if (posXJugador < 0) posXJugador = 0;
+                            if (posXJugador > 385) posXJugador = 385;
+                        }, 16);
+                    }
+                    setTimeout(() => { jugadorEl.style.bottom = '2%'; }, 300);
+                    setTimeout(() => { estaSaltando = false; if (vidaJugador > 0) estadoJugador = 'idle'; }, 600);
+                }
+                if (moviendose && (estadoJugador === 'idle' || estadoJugador === 'caminar1' || estadoJugador === 'caminar2')) {
+                    animTimer++;
+                    if (animTimer < 15) estadoJugador = 'caminar1';
+                    else if (animTimer < 30) estadoJugador = 'caminar2';
+                    else animTimer = 0;
+                } else if (!moviendose && (estadoJugador === 'caminar1' || estadoJugador === 'caminar2')) { estadoJugador = 'idle'; animTimer = 0; }
+            }
+            document.getElementById('jugador').style.left = posXJugador + 'px';
+            actualizarFondo();
+            const mirarDerechaJugador = posXRival > posXJugador;
+            const frameJugador = ANIMACIONES[estadoJugador];
+            dibujarFrame(jugadorCanvas, spriteSheets[jugadorNum], frameJugador[0], frameJugador[1], !mirarDerechaJugador);
+            if (!cooldownAtaque && !estaDefendiendo && !estaSaltando && estadoJugador !== 'derrotado' && (estadoJugador === 'idle' || estadoJugador === 'caminar1' || estadoJugador === 'caminar2')) {
+                if (teclasPulsadas['z']) atacar('puñetazo', jugadorConfig.daño, 300);
+                else if (teclasPulsadas['x']) atacar('patada', jugadorConfig.daño * 1.5, 400);
+                else if (teclasPulsadas['c']) atacar('especial', jugadorConfig.daño * 2.5, 500);
+            }
+            if (!cooldownAtaque && estaSaltando && teclasPulsadas['x']) { atacar('patada', jugadorConfig.daño * 1.2, 400); }
+            
+            let moviendoseRival = false;
+            if (estadoRival !== 'puñetazo' && estadoRival !== 'patada' && estadoRival !== 'especial' && 
+                estadoRival !== 'golpeado' && estadoRival !== 'derrotado' && estadoRival !== 'defensa') {
+                
+                const distancia = Math.abs(posXRival - posXJugador);
+                const rivalADerecha = posXRival > posXJugador;
+                const velocidadBase = rivalConfig.velocidad * DIFICULTAD[rivalNum].velocidadIA;
+                
+                if (rivalEnRepliegue && framesRepliegue > 0) {
+                    if (rivalADerecha) { posXRival += velocidadBase; } else { posXRival -= velocidadBase; }
+                    framesRepliegue--;
+                    moviendoseRival = true;
+                    if (posXRival <= 5 || posXRival >= 380) {
+                        rivalEnRepliegue = false;
+                        framesRepliegue = 0;
+                        framesDesdeUltimoRepliegue = 0;
+                    }
+                } else {
+                    framesDesdeUltimoRepliegue++;
+                    const cooldownMinimo = 180;
+                    if (framesDesdeUltimoRepliegue >= cooldownMinimo && distancia > 120 && distancia < 300) {
+                        const probRepliegue = DIFICULTAD[rivalNum].repliegue || 0.08;
+                        if (Math.random() < probRepliegue) {
+                            rivalEnRepliegue = true;
+                            framesRepliegue = 30 + Math.floor(Math.random() * 20);
+                            framesDesdeUltimoRepliegue = 0;
+                        }
+                    }
+                    if (distancia > 100) {
+                        if (rivalADerecha) { posXRival -= velocidadBase; } else { posXRival += velocidadBase; }
+                        moviendoseRival = true;
+                    }
+                }
+                if (posXRival < 0) posXRival = 0;
+                if (posXRival > 385) posXRival = 385;
+                if (moviendoseRival) {
+                    animTimerRival++;
+                    if (animTimerRival < 15) estadoRival = 'caminar1';
+                    else if (animTimerRival < 30) estadoRival = 'caminar2';
+                    else animTimerRival = 0;
+                } else if (estadoRival === 'caminar1' || estadoRival === 'caminar2') { estadoRival = 'idle'; animTimerRival = 0; }
+                
+                const probBloqueo = DIFICULTAD[rivalNum].bloqueo;
+                if (Math.random() < probBloqueo && Math.abs(posXRival - posXJugador) < 200) {
+                    estadoRival = 'defensa';
+                    setTimeout(() => { if (estadoRival === 'defensa') estadoRival = 'idle'; }, 800);
+                }
+                if (Math.random() < DIFICULTAD[rivalNum].salto && !rivalSaltando && estadoRival === 'idle') {
+                    rivalSaltando = true;
+                    estadoRival = 'saltando';
+                    const rivalEl = document.getElementById('rival');
+                    rivalEl.style.bottom = 'calc(2% + 50px)';
+                    setTimeout(() => { rivalEl.style.bottom = '2%'; }, 300);
+                    setTimeout(() => { rivalSaltando = false; if (vidaRival > 0) estadoRival = 'idle'; }, 600);
+                }
+            }
+            document.getElementById('rival').style.left = posXRival + 'px';
+            const mirarDerechaRival = posXJugador > posXRival;
+            const frameRival = ANIMACIONES[estadoRival];
+            dibujarFrame(rivalCanvas, spriteSheets[rivalNum], frameRival[0], frameRival[1], !mirarDerechaRival);
+            if (Math.random() < DIFICULTAD[rivalNum].ataque && Math.abs(posXRival - posXJugador) < 150 && estadoRival !== 'puñetazo' && estadoRival !== 'patada' && estadoRival !== 'especial' && estadoRival !== 'golpeado' && estadoRival !== 'defensa' && estadoRival !== 'derrotado' && !rivalSaltando) {
+                const ataques = ['puñetazo', 'patada', 'especial'];
+                const ataqueRival = ataques[Math.floor(Math.random() * ataques.length)];
+                const dañoRival = ataqueRival === 'puñetazo' ? rivalConfig.daño : ataqueRival === 'patada' ? rivalConfig.daño * 1.5 : rivalConfig.daño * 2.5;
+                const duracion = ataqueRival === 'puñetazo' ? 300 : ataqueRival === 'patada' ? 400 : 500;
+                atacarRival(ataqueRival, dañoRival, duracion);
+            }
+            lanzarHadoukenRival();
+            actualizarBolasEnergia();
+            dibujarBolasEnergia();
+            for (let tecla in teclasPulsadas) { delete teclasPulsadas[tecla]; }
+            requestAnimationFrame(bucleJuego);
+        }
+
+        function atacar(tipo, daño, duracion) {
+            cooldownAtaque = true; estadoJugador = tipo;
+            const distancia = Math.abs(posXRival - posXJugador);
+            reproducirSonido(tipo);
+            if (distancia < 120) {
+                setTimeout(() => {
+                    let dañoFinal = daño;
+                    if (estadoRival === 'defensa') { dañoFinal = daño * 0.2; mostrarEfectoGolpe(posXRival, 'BLOQ'); reproducirSonido('bloqueo'); }
+                    else { estadoRival = 'golpeado'; mostrarEfectoGolpe(posXRival, tipo); aplicarRetrocesoRival(tipo); }
+                    vidaRival -= dañoFinal; actualizarBarrasVida();
+                    setTimeout(() => { if (vidaRival > 0 && estadoRival !== 'defensa') estadoRival = 'idle'; }, 300);
+                    if (vidaRival <= 0 && !roundTerminado) { roundTerminado = true; estadoRival = 'derrotado'; dibujarDerrotado('rival'); reproducirSonido('ko'); setTimeout(() => { ganarRound(); }, 2000); }
+                }, 100);
+            }
+            setTimeout(() => { cooldownAtaque = false; if (vidaRival > 0 && estadoJugador !== 'saltando' && estadoJugador !== 'defensa') estadoJugador = 'idle'; }, duracion);
+        }
+
+        function atacarRival(tipo, daño, duracion) {
+            estadoRival = tipo;
+            reproducirSonido(tipo);
+            const distancia = Math.abs(posXRival - posXJugador);
+            if (distancia < 120) {
+                setTimeout(() => {
+                    let dañoFinal = daño;
+                    if (estaDefendiendo) { dañoFinal = daño * 0.2; mostrarEfectoGolpe(posXJugador, 'BLOQ'); reproducirSonido('bloqueo'); }
+                    else { estadoJugador = 'golpeado'; mostrarEfectoGolpe(posXJugador, tipo); aplicarRetrocesoJugador(tipo); }
+                    vidaJugador -= dañoFinal; actualizarBarrasVida();
+                    setTimeout(() => { if (vidaJugador > 0 && !estaDefendiendo) estadoJugador = 'idle'; }, 300);
+                    if (vidaJugador <= 0 && !roundTerminado) { roundTerminado = true; estadoJugador = 'derrotado'; dibujarDerrotado('jugador'); reproducirSonido('ko'); setTimeout(() => { perderRound(); }, 2000); }
+                }, 100);
+            }
+            setTimeout(() => { if (vidaRival > 0 && estadoRival !== 'golpeado' && estadoRival !== 'derrotado' && estadoRival !== 'defensa') estadoRival = 'idle'; }, duracion);
+        }
+
+        function ganarRound() {
+            if (roundTerminado === false) { roundTerminado = true; }
+            if (!juegoActivo) return;
+            juegoActivo = false;
+            detenerTimer();
+            victoriasJugador = Math.min(2, victoriasJugador + 1);
+            actualizarMarcador(); 
+            reproducirSonido('victoria');
+            timeoutGanarRound = setTimeout(() => {
+                if (victoriasJugador >= 2) {
+                    if (indiceRivalActual >= rivalesDisponibles.length - 1) { mostrarResultadoFinal(true); } else { iniciarSiguienteCombate(); }
+                } else { roundActual++; iniciarRound(); }
+            }, 2000);
+        }
+
+        function perderRound() {
+            if (roundTerminado === false) { roundTerminado = true; }
+            if (!juegoActivo) return;
+            juegoActivo = false;
+            detenerTimer();
+            victoriasRival = Math.min(2, victoriasRival + 1);
+            actualizarMarcador(); 
+            reproducirSonido('derrota');
+            timeoutGanarRound = setTimeout(() => {
+                if (victoriasRival >= 2) { mostrarPantallaCombatePerdido(); } else { roundActual++; iniciarRound(); }
+            }, 2000);
+        }
+
+        function mostrarPantallaCombatePerdido() {
+            estadoJuego = 'final';
+            const indicador = document.getElementById('modo-indicador');
+            indicador.innerText = 'GAME OVER: Pulsa A para reiniciar';
+            indicador.classList.remove('oculto');
+            document.getElementById('hud').classList.add('oculto');
+            document.getElementById('jugador').classList.add('oculto');
+            document.getElementById('rival').classList.add('oculto');
+            const titulo = document.getElementById('resultado-final-titulo');
+            const resultado = document.getElementById('resultado-final');
+            titulo.innerText = '¡DERROTADO!';
+            titulo.style.color = '#f00';
+            resultado.innerHTML = '<p style="color: #f00; font-size: 16px;">' + rivalConfig.nombre + ' te ha vencido</p>' + '<p style="color: #fff;">Marcador: ' + victoriasJugador + ' - ' + victoriasRival + '</p>' + '<p style="color: #ff0;">Inténtalo de nuevo</p>';
+            document.getElementById('pantalla-final').classList.remove('oculto');
+        }
+
+        function siguienteRound() {
+            vibrarBoton();
+            document.getElementById('pantalla-round').classList.remove('visible');
+            estadoJugador = 'idle'; estadoRival = 'idle';
+            estaSaltando = false; estaDefendiendo = false; cooldownAtaque = false;
+            iniciarRound();
+        }
+
+        function mostrarResultadoFinal(gano) {
+            estadoJuego = 'final';
+            const indicador = document.getElementById('modo-indicador');
+            indicador.innerText = 'FIN DEL JUEGO: Pulsa A para reiniciar';
+            indicador.classList.remove('oculto');
+            document.getElementById('hud').classList.add('oculto');
+            document.getElementById('jugador').classList.add('oculto');
+            document.getElementById('rival').classList.add('oculto');
+            const titulo = document.getElementById('resultado-final-titulo');
+            const resultado = document.getElementById('resultado-final');
+            if (gano) {
+                titulo.innerText = '¡CAMPEÓN!'; titulo.style.color = '#0f0';
+                resultado.innerHTML = '<p style="color: #0f0; font-size: 16px;">¡Derrotaste a todos los rivales!</p>' + '<p style="color: #fff;">Incluidos a La Jefa Glitch, Pixelmaster Kombat y Retroserwer Respawn</p>' + '<p style="color: #ff0;">¡Eres el campeón!</p>';
+            } else {
+                titulo.innerText = '¡GAME OVER!'; titulo.style.color = '#f00';
+                resultado.innerHTML = '<p style="color: #f00; font-size: 16px;">Has sido derrotado</p>' + '<p style="color: #fff;">No pudiste vencer a todos los rivales</p>' + '<p style="color: #ff0;">Inténtalo de nuevo</p>';
+            }
+            document.getElementById('pantalla-final').classList.remove('oculto');
+        }
+
+        function actualizarMarcador() {
+            for (let i = 1; i <= 3; i++) {
+                const dot = document.getElementById('v-j' + i);
+                if (dot) { dot.classList.remove('ganada-jugador'); if (i <= victoriasJugador) dot.classList.add('ganada-jugador'); }
+            }
+            for (let i = 1; i <= 3; i++) {
+                const dot = document.getElementById('v-r' + i);
+                if (dot) { dot.classList.remove('ganada-rival'); if (i <= victoriasRival) dot.classList.add('ganada-rival'); }
+            }
+        }
+
+        function mostrarEfectoGolpe(x, tipo) {
+            const efecto = document.createElement('div');
+            efecto.className = 'efecto-golpe';
+            if (tipo === 'puñetazo') efecto.innerText = 'POW!';
+            else if (tipo === 'patada') efecto.innerText = 'BAM!';
+            else if (tipo === 'especial') efecto.innerText = 'BOOM!';
+            else efecto.innerText = 'BLOQ!';
+            efecto.style.left = x + 'px'; efecto.style.bottom = '40%';
+            document.getElementById('juego').appendChild(efecto);
+            setTimeout(() => efecto.remove(), 500);
+        }
+
+        function mostrarAnuncio(texto) {
+            const anuncio = document.createElement('div');
+            anuncio.id = 'anuncio'; anuncio.innerText = texto;
+            document.getElementById('juego').appendChild(anuncio);
+            setTimeout(() => anuncio.remove(), 2000);
+        }
+
+        function actualizarBarrasVida() {
+            document.getElementById('vida-jugador').style.width = Math.max(0, (vidaJugador / jugadorConfig.vida) * 100) + '%';
+            document.getElementById('vida-rival').style.width = Math.max(0, (vidaRival / vidaRivalMax) * 100) + '%';
+        }
+
+        actualizarSeleccionMenu();
+        cargarSpriteSheets().then(() => { console.log('✅ Spritesheets cargados:', Object.keys(spriteSheets).length, 'personajes'); }).catch((e) => { console.error('❌ Error cargando spritesheets:', e); });
+    </script>
+</body>
+</html>
