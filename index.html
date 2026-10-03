@@ -247,9 +247,8 @@
             margin-bottom: 10px;
         }
 
-        /* ACTUALIZADO: Viewport para 3 fichas */
         .selector-viewport {
-            width: 361px; /* 3 fichas × 115px + 2 gaps × 8px */
+            width: 361px;
             overflow: hidden;
             margin: 10px auto;
         }
@@ -260,24 +259,27 @@
             transition: transform 0.3s ease-in-out;
         }
 
+        /* ACTUALIZADO: Más padding y box-sizing para que el borde amarillo se vea completo */
         .personaje-opcion {
             display: flex;
             flex-direction: column;
             align-items: center;
             width: 115px;
-            padding: 6px 4px;
+            padding: 8px 6px;
             border: 2px solid #555;
             border-radius: 5px;
             transition: all 0.2s;
             background: rgba(255,255,255,0.1);
             flex-shrink: 0;
+            box-sizing: border-box;
         }
 
+        /* ACTUALIZADO: Scale reducido a 1.02 para no salirse del viewport */
         .personaje-opcion.seleccionado {
             border: 3px solid #ff0;
             background: rgba(255,255,0,0.25);
             box-shadow: 0 0 15px rgba(255,255,0,0.6);
-            transform: scale(1.05);
+            transform: scale(1.02);
         }
 
         .personaje-opcion img { 
@@ -592,7 +594,6 @@
         let menuCooldown = false;
         const TOTAL_PERSONAJES = 5;
 
-        // ACTUALIZADO: Lógica de carrusel para 3 fichas visibles
         function actualizarSeleccionMenu() {
             document.querySelectorAll('.personaje-opcion').forEach(el => el.classList.remove('seleccionado'));
             const opciones = document.querySelectorAll('.personaje-opcion');
@@ -602,15 +603,11 @@
             indicador.innerText = 'MENÚ: ' + nombres[indicePersonaje];
             indicador.classList.remove('oculto');
             
-            // Desplazar el slider según el índice
             const slider = document.getElementById('selector-slider');
             const anchoFicha = 115;
             const gap = 8;
-            const desplazamiento = anchoFicha + gap; // 123px por ficha
+            const desplazamiento = anchoFicha + gap;
             
-            // Índice 0, 1, 2: sin desplazamiento (muestra fichas 1, 2, 3)
-            // Índice 3: desplazar 1 ficha (-123px, muestra fichas 2, 3, 4)
-            // Índice 4: desplazar 2 fichas (-246px, muestra fichas 3, 4, 5)
             const fichasADesplazar = Math.max(0, indicePersonaje - 2);
             slider.style.transform = `translateX(-${fichasADesplazar * desplazamiento}px)`;
         }
