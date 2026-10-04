@@ -521,11 +521,16 @@
                                     <h3>Daniju Dragon</h3>
                                     <div class="stats">Vida: ★★★★<br>Vel: ★★★<br>Daño: ★★★★</div>
                                 </div>
-                                <!-- NUEVO: Isaac Wantakill -->
                                 <div class="personaje-opcion" data-personaje="6">
                                     <img src="avatar6.png" alt="Isaac Wantakill">
                                     <h3>Isaac Wantakill</h3>
                                     <div class="stats">Vida: ★★★★★<br>Vel: ★★★★<br>Daño: ★★★★★</div>
+                                </div>
+                                <!-- NUEVO: David Miguel Ragnarok -->
+                                <div class="personaje-opcion" data-personaje="7">
+                                    <img src="avatar7.png" alt="David Miguel Ragnarok">
+                                    <h3>David Miguel Ragnarok</h3>
+                                    <div class="stats">Vida: ★★★★★<br>Vel: ★★★★★<br>Daño: ★★★★★</div>
                                 </div>
                             </div>
                         </div>
@@ -596,13 +601,13 @@
         let estadoJuego = 'menu';
         let indicePersonaje = 0;
         let menuCooldown = false;
-        const TOTAL_PERSONAJES = 6; // ACTUALIZADO: ahora son 6
+        const TOTAL_PERSONAJES = 7;
 
         function actualizarSeleccionMenu() {
             document.querySelectorAll('.personaje-opcion').forEach(el => el.classList.remove('seleccionado'));
             const opciones = document.querySelectorAll('.personaje-opcion');
             if (opciones[indicePersonaje]) opciones[indicePersonaje].classList.add('seleccionado');
-            const nombres = ['El Jefe Fatality', 'La Jefa Glitch', 'Pixelmaster Kombat', 'Retroserwer Respawn', 'Daniju Dragon', 'Isaac Wantakill'];
+            const nombres = ['El Jefe Fatality', 'La Jefa Glitch', 'Pixelmaster Kombat', 'Retroserwer Respawn', 'Daniju Dragon', 'Isaac Wantakill', 'David Miguel Ragnarok'];
             const indicador = document.getElementById('modo-indicador');
             indicador.innerText = 'MENÚ: ' + nombres[indicePersonaje];
             indicador.classList.remove('oculto');
@@ -612,11 +617,6 @@
             const gap = 8;
             const desplazamiento = anchoFicha + gap;
             
-            // Con 6 personajes y 3 visibles:
-            // Índice 0,1,2: 0px (muestra 1,2,3)
-            // Índice 3: -123px (muestra 2,3,4)
-            // Índice 4: -246px (muestra 3,4,5)
-            // Índice 5: -369px (muestra 4,5,6)
             const fichasADesplazar = Math.max(0, indicePersonaje - 2);
             slider.style.transform = `translateX(-${fichasADesplazar * desplazamiento}px)`;
         }
@@ -629,7 +629,7 @@
         function seleccionarPersonaje(num) {
             vibrarBoton();
             jugadorNum = num;
-            rivalesDisponibles = [1, 2, 3, 4, 5, 6].filter(n => n !== num); // ACTUALIZADO: 6 rivales
+            rivalesDisponibles = [1, 2, 3, 4, 5, 6, 7].filter(n => n !== num);
             rivalesDisponibles.sort(() => Math.random() - 0.5);
             indiceRivalActual = 0;
             jugadorConfig = PERSONAJES[jugadorNum];
@@ -926,28 +926,27 @@
         document.addEventListener('keydown', (e) => { const tecla = e.key.toLowerCase(); if (!teclas[tecla]) { teclasPulsadas[tecla] = true; } teclas[tecla] = true; e.preventDefault(); activarTecla(tecla); });
         document.addEventListener('keyup', (e) => teclas[e.key.toLowerCase()] = false);
 
-        // ACTUALIZADO: añadido Isaac Wantakill
         const PERSONAJES = {
             1: { nombre: 'El Jefe Fatality', avatar: 'avatar1.png', avatarCara: 'cara1.png', spriteSheet: 'spritesheet.png', vida: 140, velocidad: 4, daño: 9 },
             2: { nombre: 'La Jefa Glitch', avatar: 'avatar2.png', avatarCara: 'cara2.png', spriteSheet: 'spritesheet2.png', vida: 100, velocidad: 6, daño: 9 },
             3: { nombre: 'Pixelmaster Kombat', avatar: 'avatar3.png', avatarCara: 'cara3.png', spriteSheet: 'spritesheet3.png', vida: 150, velocidad: 3, daño: 11 },
             4: { nombre: 'Retroserwer Respawn', avatar: 'avatar4.png', avatarCara: 'cara4.png', spriteSheet: 'spritesheet4.png', vida: 140, velocidad: 4, daño: 9 },
             5: { nombre: 'Daniju Dragon', avatar: 'avatar5.png', avatarCara: 'cara5.png', spriteSheet: 'spritesheet5.png', vida: 160, velocidad: 5, daño: 12 },
-            6: { nombre: 'Isaac Wantakill', avatar: 'avatar6.png', avatarCara: 'cara6.png', spriteSheet: 'spritesheet6.png', vida: 180, velocidad: 6, daño: 14 }
+            6: { nombre: 'Isaac Wantakill', avatar: 'avatar6.png', avatarCara: 'cara6.png', spriteSheet: 'spritesheet6.png', vida: 180, velocidad: 6, daño: 14 },
+            7: { nombre: 'David Miguel Ragnarok', avatar: 'avatar7.png', avatarCara: 'cara7.png', spriteSheet: 'spritesheet7.png', vida: 200, velocidad: 7, daño: 16 }
         };
 
-        // ACTUALIZADO: Isaac Wantakill (6) con la dificultad más alta
         const DIFICULTAD = {
             1: { vidaExtra: 1.5, velocidadIA: 0.65, bloqueo: 0.050, ataque: 0.018, salto: 0.012, repliegue: 0.10 },
             2: { vidaExtra: 1.4, velocidadIA: 0.70, bloqueo: 0.040, ataque: 0.015, salto: 0.010, repliegue: 0.12 },
             3: { vidaExtra: 1.6, velocidadIA: 0.60, bloqueo: 0.060, ataque: 0.022, salto: 0.015, repliegue: 0.08 },
             4: { vidaExtra: 1.55, velocidadIA: 0.75, bloqueo: 0.055, ataque: 0.020, salto: 0.013, repliegue: 0.15 },
             5: { vidaExtra: 1.75, velocidadIA: 0.85, bloqueo: 0.070, ataque: 0.028, salto: 0.020, repliegue: 0.20 },
-            6: { vidaExtra: 1.90, velocidadIA: 0.95, bloqueo: 0.080, ataque: 0.035, salto: 0.025, repliegue: 0.25 }
+            6: { vidaExtra: 1.90, velocidadIA: 0.95, bloqueo: 0.080, ataque: 0.035, salto: 0.025, repliegue: 0.25 },
+            7: { vidaExtra: 2.10, velocidadIA: 1.00, bloqueo: 0.090, ataque: 0.045, salto: 0.030, repliegue: 0.30 }
         };
 
-        // ACTUALIZADO: Isaac Wantakill usa hadouken2 (como el resto excepto La Jefa)
-        const HADOUKEN_RIVAL = { 1: 0.003, 2: 0.002, 3: 0.005, 4: 0.004, 5: 0.006, 6: 0.008 };
+        const HADOUKEN_RIVAL = { 1: 0.003, 2: 0.002, 3: 0.005, 4: 0.004, 5: 0.006, 6: 0.008, 7: 0.010 };
         let FRAME_WIDTH = 0, FRAME_HEIGHT = 0;
         const COLS = 5, ROWS = 2;
         const ANIMACIONES = { idle: [0, 0], caminar1: [0, 1], caminar2: [0, 2], saltando: [0, 3], puñetazo: [0, 4], patada: [1, 0], especial: [1, 1], golpeado: [1, 2], derrotado: [1, 3], defensa: [1, 4] };
@@ -974,7 +973,6 @@
             el.classList.remove('tanque');
         }
 
-        // ACTUALIZADO: carga del spritesheet6.png
         function cargarSpriteSheets() {
             hadoukenImg = new Image();
             hadoukenImg.src = 'hadouken.png';
@@ -986,7 +984,8 @@
                 new Promise((resolve, reject) => { const img = new Image(); img.src = 'spritesheet3.png'; img.onload = () => { spriteSheets[3] = img; resolve(); }; img.onerror = () => { console.error('❌ No se pudo cargar spritesheet3.png'); reject(); }; }),
                 new Promise((resolve, reject) => { const img = new Image(); img.src = 'spritesheet4.png'; img.onload = () => { spriteSheets[4] = img; resolve(); }; img.onerror = () => { console.error('❌ No se pudo cargar spritesheet4.png'); reject(); }; }),
                 new Promise((resolve, reject) => { const img = new Image(); img.src = 'spritesheet5.png'; img.onload = () => { spriteSheets[5] = img; resolve(); }; img.onerror = () => { console.error('❌ No se pudo cargar spritesheet5.png'); reject(); }; }),
-                new Promise((resolve, reject) => { const img = new Image(); img.src = 'spritesheet6.png'; img.onload = () => { spriteSheets[6] = img; resolve(); }; img.onerror = () => { console.error('❌ No se pudo cargar spritesheet6.png'); reject(); }; })
+                new Promise((resolve, reject) => { const img = new Image(); img.src = 'spritesheet6.png'; img.onload = () => { spriteSheets[6] = img; resolve(); }; img.onerror = () => { console.error('❌ No se pudo cargar spritesheet6.png'); reject(); }; }),
+                new Promise((resolve, reject) => { const img = new Image(); img.src = 'spritesheet7.png'; img.onload = () => { spriteSheets[7] = img; resolve(); }; img.onerror = () => { console.error('❌ No se pudo cargar spritesheet7.png'); reject(); }; })
             ]);
         }
 
@@ -1298,7 +1297,6 @@
             iniciarRound();
         }
 
-        // ACTUALIZADO: texto de victoria incluye a Isaac Wantakill
         function mostrarResultadoFinal(gano) {
             estadoJuego = 'final';
             const indicador = document.getElementById('modo-indicador');
@@ -1311,7 +1309,7 @@
             const resultado = document.getElementById('resultado-final');
             if (gano) {
                 titulo.innerText = '¡CAMPEÓN!'; titulo.style.color = '#0f0';
-                resultado.innerHTML = '<p style="color: #0f0; font-size: 16px;">¡Derrotaste a todos los rivales!</p>' + '<p style="color: #fff;">Incluidos a La Jefa Glitch, Pixelmaster Kombat, Retroserwer Respawn, Daniju Dragon e Isaac Wantakill</p>' + '<p style="color: #ff0;">¡Eres el campeón!</p>';
+                resultado.innerHTML = '<p style="color: #0f0; font-size: 16px;">¡Derrotaste a todos los rivales!</p>' + '<p style="color: #fff;">Incluidos a La Jefa Glitch, Pixelmaster Kombat, Retroserwer Respawn, Daniju Dragon, Isaac Wantakill y David Miguel Ragnarok</p>' + '<p style="color: #ff0;">¡Eres el campeón!</p>';
             } else {
                 titulo.innerText = '¡GAME OVER!'; titulo.style.color = '#f00';
                 resultado.innerHTML = '<p style="color: #f00; font-size: 16px;">Has sido derrotado</p>' + '<p style="color: #fff;">No pudiste vencer a todos los rivales</p>' + '<p style="color: #ff0;">Inténtalo de nuevo</p>';
